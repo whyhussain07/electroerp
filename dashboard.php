@@ -174,14 +174,20 @@ $recent_purchases = $pdo->query("SELECT p.*, s.name as supplier_name FROM purcha
     <a href="modules/expenses/index.php" class="nav-item"><span class="icon">🧾</span> Expenses</a>
     <a href="modules/cash/index.php" class="nav-item"><span class="icon">🏦</span> Cash Counter</a>
 
-    <div class="nav-section">Masters</div>
+<div class="nav-section">Masters</div>
     <a href="modules/customers/index.php" class="nav-item"><span class="icon">👥</span> Customers</a>
     <a href="modules/suppliers/index.php" class="nav-item"><span class="icon">🏭</span> Suppliers</a>
+
+    <div class="nav-section">HR</div>
+    <a href="modules/hr/index.php" class="nav-item"><span class="icon">👨‍💼</span> Employees</a>
+    <a href="modules/hr/attendance.php" class="nav-item"><span class="icon">📅</span> Attendance</a>
+    <a href="modules/hr/salary.php" class="nav-item"><span class="icon">💵</span> Salary</a>
 
     <div class="nav-section">Reports</div>
     <a href="modules/reports/index.php" class="nav-item"><span class="icon">📈</span> All Reports</a>
 
     <div class="nav-section">Settings</div>
+    <a href="modules/users/index.php" class="nav-item"><span class="icon">👤</span> User Management</a>
     <a href="modules/settings/index.php" class="nav-item"><span class="icon">⚙️</span> Company Settings</a>
 
     <div class="sidebar-footer">
