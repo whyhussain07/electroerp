@@ -5,6 +5,7 @@ if(!isset($_SESSION['user_id'])) {
     exit();
 }
 require_once '../../includes/db.php';
+require_once '../../includes/auth.php';
 
 // Handle delete
 if(isset($_GET['delete'])) {
@@ -152,7 +153,9 @@ $purchases = $pdo->query("
                 </td>
                 <td>
                     <a href="view.php?id=<?php echo $p['id']; ?>" class="btn btn-view">View</a>
-                    <a href="index.php?delete=<?php echo $p['id']; ?>" class="btn btn-danger" onclick="return confirm('Delete this purchase? Stock will be reversed.')">Delete</a>
+                 <?php if(isAdmin()): ?>
+<a href="index.php?delete=<?php echo $p['id']; ?>" class="btn btn-danger" onclick="return confirm('Delete this purchase? Stock will be reversed.')">Delete</a>
+<?php endif; ?>
                 </td>
             </tr>
             <?php endforeach; ?>

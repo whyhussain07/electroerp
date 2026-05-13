@@ -11,6 +11,10 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if($user) {
+        if($user['status'] === 'inactive') {
+            header("Location: login.php?error=inactive");
+            exit();
+        }
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['user_name'] = $user['name'];
         $_SESSION['user_role'] = $user['role'];

@@ -158,6 +158,7 @@ $recent_purchases = $pdo->query("SELECT p.*, s.name as supplier_name FROM purcha
     <a href="modules/inventory/add.php" class="nav-item"><span class="icon">➕</span> Add Product</a>
     <a href="modules/inventory/categories.php" class="nav-item"><span class="icon">🏷️</span> Categories</a>
     <a href="modules/inventory/bulk_price.php" class="nav-item"><span class="icon">💲</span> Bulk Price Change</a>
+    <a href="modules/inventory/import.php" class="nav-item"><span class="icon">📤</span> Import from Excel</a>
     <a href="modules/stock/index.php" class="nav-item"><span class="icon">🔧</span> Stock Adjustment</a>
 
 <div class="nav-section">Transactions</div>

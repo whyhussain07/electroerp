@@ -5,6 +5,7 @@ if(!isset($_SESSION['user_id'])) {
     exit();
 }
 require_once '../../includes/db.php';
+require_once '../../includes/auth.php';
 
 // Handle delete
 if(isset($_GET['delete'])) {
@@ -150,9 +151,11 @@ $sales = $pdo->query("SELECT * FROM sales ORDER BY sale_date DESC, id DESC")->fe
                 </td>
                 <td>
                     <a href="view.php?id=<?php echo $s['id']; ?>" class="btn btn-view">View</a>
-                    <a href="index.php?delete=<?php echo $s['id']; ?>" class="btn btn-danger" onclick="return confirm('Delete this sale? Stock will be restored.')">Delete</a>
+                    
                 </td>
-            </tr>
+            <?php if(isAdmin()): ?>
+<a href="index.php?delete=<?php echo $s['id']; ?>" class="btn btn-danger" onclick="return confirm('Delete this sale? Stock will be restored.')">Delete</a>
+<?php endif; ?>
             <?php endforeach; ?>
         <?php endif; ?>
         </tbody>

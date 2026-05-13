@@ -2,6 +2,12 @@
 session_start();
 if(!isset($_SESSION['user_id'])) { header("Location: ../../login.php"); exit(); }
 require_once '../../includes/db.php';
+require_once '../../includes/auth.php';
+
+if(isset($_GET['delete']) && isAdmin()) {
+    $pdo->prepare("DELETE FROM salary_payments WHERE id = ?")->execute([(int)$_GET['delete']]);
+    header("Location: salary.php?msg=deleted"); exit();
+}
 
 if($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pdo->prepare("INSERT INTO salary_payments (employee_id, amount, month, payment_date, payment_method, notes) VALUES (?, ?, ?, ?, ?, ?)")
@@ -10,7 +16,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $employees = $pdo->query("SELECT * FROM employees WHERE status = 'active' ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
-$payments = $pdo->query("SELECT sp.*, e.name as employee_name FROM salary_payments sp LEFT JOIN employees e ON sp.employee_id = e.id ORDER BY sp.payment_date DESC LIMIT 20")->fetchAll(PDO::FETCH_ASSOC);
+$payments = $pdo->query("SELECT sp.*, e.name as employee_name FROM salary_payments sp LEFT JOIN employees e ON sp.employee_id = e.id ORDER BY sp.payment_date DESC")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -33,7 +39,7 @@ $payments = $pdo->query("SELECT sp.*, e.name as employee_name FROM salary_paymen
         .topbar { background: #1e293b; padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
         .topbar h2 { font-size: 18px; }
         .content { padding: 30px; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 30px; }
         .form-box { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; }
         .form-box h3 { font-size: 16px; margin-bottom: 20px; color: #38bdf8; }
         .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
@@ -41,6 +47,7 @@ $payments = $pdo->query("SELECT sp.*, e.name as employee_name FROM salary_paymen
         input, select { padding: 10px 14px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #f1f5f9; font-size: 14px; width: 100%; }
         input:focus, select:focus { outline: none; border-color: #38bdf8; }
         .btn-save { width: 100%; padding: 12px; background: #22c55e; color: white; font-size: 14px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; margin-top: 8px; }
+        .btn-danger { background: #ef4444; color: white; font-size: 12px; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-block; border: none; cursor: pointer; }
         .success { background: #dcfce7; color: #16a34a; padding: 10px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; }
         .section-box { background: #1e293b; border-radius: 12px; overflow: hidden; border: 1px solid #334155; }
         .section-box h3 { padding: 16px 20px; font-size: 14px; border-bottom: 1px solid #334155; color: #94a3b8; }
@@ -49,6 +56,7 @@ $payments = $pdo->query("SELECT sp.*, e.name as employee_name FROM salary_paymen
         td { padding: 11px 16px; font-size: 13px; border-bottom: 1px solid #334155; }
         tr:last-child td { border-bottom: none; }
         .empty { text-align: center; padding: 30px; color: #64748b; }
+        .admin-badge { background: #dbeafe; color: #2563eb; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -88,10 +96,13 @@ $payments = $pdo->query("SELECT sp.*, e.name as employee_name FROM salary_paymen
     <div class="sidebar-footer"><a href="../../logout.php">🚪 Logout</a></div>
 </div>
 <div class="main">
-    <div class="topbar"><h2>Salary Payments</h2></div>
+    <div class="topbar">
+        <h2>Salary Payments</h2>
+        <?php if(isAdmin()): ?><span class="admin-badge">👑 Admin Mode</span><?php endif; ?>
+    </div>
     <div class="content">
         <?php if(isset($_GET['msg'])): ?>
-        <div class="success">✅ Salary payment recorded.</div>
+        <div class="success"><?php echo $_GET['msg']==='paid'?'✅ Salary recorded.':'🗑️ Payment deleted.'; ?></div>
         <?php endif; ?>
         <div class="grid-2">
             <div class="form-box">
@@ -106,7 +117,7 @@ $payments = $pdo->query("SELECT sp.*, e.name as employee_name FROM salary_paymen
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="form-group"><label>Month</label><input type="text" name="month" placeholder="e.g. May 2026" value="<?php echo date('F Y'); ?>"></div>
+                    <div class="form-group"><label>Month</label><input type="text" name="month" value="<?php echo date('F Y'); ?>"></div>
                     <div class="form-group"><label>Amount (PKR) *</label><input type="number" name="amount" id="salary_amount" step="0.01" value="0" required></div>
                     <div class="form-group">
                         <label>Payment Method</label>
@@ -122,12 +133,12 @@ $payments = $pdo->query("SELECT sp.*, e.name as employee_name FROM salary_paymen
                 </form>
             </div>
             <div class="section-box">
-                <h3>Recent Salary Payments</h3>
+                <h3>Salary Payment History</h3>
                 <table>
-                    <thead><tr><th>Employee</th><th>Month</th><th>Amount</th><th>Date</th></tr></thead>
+                    <thead><tr><th>Employee</th><th>Month</th><th>Amount</th><th>Date</th><?php if(isAdmin()): ?><th>Action</th><?php endif; ?></tr></thead>
                     <tbody>
                     <?php if(empty($payments)): ?>
-                        <tr><td colspan="4" class="empty">No payments yet.</td></tr>
+                        <tr><td colspan="5" class="empty">No payments yet.</td></tr>
                     <?php else: ?>
                         <?php foreach($payments as $p): ?>
                         <tr>
@@ -135,6 +146,9 @@ $payments = $pdo->query("SELECT sp.*, e.name as employee_name FROM salary_paymen
                             <td><?php echo htmlspecialchars($p['month']); ?></td>
                             <td>PKR <?php echo number_format($p['amount'], 0); ?></td>
                             <td><?php echo $p['payment_date']; ?></td>
+                            <?php if(isAdmin()): ?>
+                            <td><a href="salary.php?delete=<?php echo $p['id']; ?>" class="btn-danger" onclick="return confirm('Delete this payment?')">Delete</a></td>
+                            <?php endif; ?>
                         </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>

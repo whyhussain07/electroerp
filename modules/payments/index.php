@@ -2,6 +2,7 @@
 session_start();
 if(!isset($_SESSION['user_id'])) { header("Location: ../../login.php"); exit(); }
 require_once '../../includes/db.php';
+require_once '../../includes/auth.php';
 
 $type = $_GET['type'] ?? 'in';
 $payments = $pdo->prepare("SELECT * FROM payments WHERE type = ? ORDER BY payment_date DESC");
@@ -117,9 +118,9 @@ $total = $total->fetchColumn();
                     <td><span class="badge badge-<?php echo $p['payment_method']; ?>"><?php echo ucfirst($p['payment_method']); ?></span></td>
                     <td><?php echo htmlspecialchars($p['note']); ?></td>
                     <td style="color:<?php echo $type==='in'?'#22c55e':'#ef4444'; ?>; font-weight:600;">PKR <?php echo number_format($p['amount'], 0); ?></td>
-                    <td><a href="index.php?type=<?php echo $type; ?>&delete=<?php echo $p['id']; ?>" class="btn btn-danger" onclick="return confirm('Delete?')">Delete</a></td>
-                </tr>
-                <?php endforeach; ?>
+                 <?php if(isAdmin()): ?>
+<a href="index.php?delete=<?php echo $p['id']; ?>" class="btn btn-danger" onclick="return confirm('Delete this purchase? Stock will be reversed.')">Delete</a>
+<?php endif; ?>
             <?php endif; ?>
             </tbody>
         </table>
