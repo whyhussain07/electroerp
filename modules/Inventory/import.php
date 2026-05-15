@@ -5,23 +5,21 @@ require_once '../../includes/db.php';
 require_once '../../includes/auth.php';
 require_once '../../vendor/autoload.php';
 
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 $errors = [];
 $success = 0;
 
 // Handle download template
 if(isset($_GET['template'])) {
-    use PhpOffice\PhpSpreadsheet\Spreadsheet;
-    use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-    use PhpOffice\PhpSpreadsheet\Style\Fill;
-    use PhpOffice\PhpSpreadsheet\Style\Alignment;
-
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
     $sheet->setTitle('Products');
 
-    // Headers
     $headers = ['name', 'brand', 'model', 'category', 'imei_serial', 'purchase_price', 'mrp_price', 'sale_price', 'stock', 'low_stock_alert', 'description'];
     foreach($headers as $i => $h) {
         $col = chr(65 + $i);
@@ -34,7 +32,6 @@ if(isset($_GET['template'])) {
         $sheet->getColumnDimension($col)->setWidth(20);
     }
 
-    // Sample row
     $sample = ['Samsung Galaxy A55', 'Samsung', 'SM-A556', 'Smartphone', '', '85000', '95000', '92000', '10', '3', 'Sample product'];
     foreach($sample as $i => $val) {
         $sheet->setCellValue(chr(65+$i).'2', $val);
@@ -64,16 +61,12 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['excel_file'])) {
             $spreadsheet = IOFactory::load($file['tmp_name']);
             $sheet = $spreadsheet->getActiveSheet();
             $rows = $sheet->toArray();
-
-            // Skip header row
             array_shift($rows);
 
             $categories = $pdo->query("SELECT name FROM categories")->fetchAll(PDO::FETCH_COLUMN);
 
-            foreach($rows as $row_num => $row) {
-                // Skip empty rows
+            foreach($rows as $row) {
                 if(empty(array_filter($row))) continue;
-
                 $name = trim($row[0] ?? '');
                 if(empty($name)) continue;
 
@@ -88,7 +81,6 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['excel_file'])) {
                 $low_stock_alert = (int)($row[9] ?? 5);
                 $description = trim($row[10] ?? '');
 
-                // Auto add category if not exists
                 if(!empty($category) && !in_array($category, $categories)) {
                     $pdo->prepare("INSERT INTO categories (name) VALUES (?)")->execute([$category]);
                     $categories[] = $category;
